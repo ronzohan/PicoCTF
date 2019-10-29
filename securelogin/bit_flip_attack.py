@@ -40,22 +40,25 @@ class AESCipher:
         iv = enc[:16]
         cipher = AES.new(self.key.encode(), AES.MODE_CBC, iv)
         dec = cipher.decrypt(enc[16:])
-        print('Decrypted cipher', dec.hex())
         return unpad(dec).decode('utf8')
 
 if __name__ == '__main__':
-    cookie = 'Piw96Gvx5Jz01V7iuMXSwWDkcRYB1vIVzj5atcBhkuqsQTkDgjoYYj7UWvAR9L6F/v0rCYLU5N1tq6zAU7XnObn1+2AEjRv8kb1PD9onqqA='
-    expected_string = "{'username': 'aaaaa', 'password': '', 'admin': 0}"
+    # Expected string for this encrypted text
+    # {'admin': 0, 'username': 'aaaaa', 'password': ''}
+    cookie = '5B4MngDAGKfG8zoY+U2ijPWPwd0jLBO/+8jet0Txkx5N05MgZpG0m5dQ6zjlXwbTkapttxNiJSf6FqTLKFtUlrbfVtKBqZ/MPQQtHIToLf8='
 
-    aes_cipher = AESCipher('123456')
-    enc = aes_cipher.encrypt(expected_string.encode())
-    dec = aes_cipher.decrypt(enc)
-
-    iv, cipher = decode_text(enc)
+    iv, cipher = decode_text(cookie)
 
     print('IV', iv.hex())
     print('Cipher', cipher.hex())
-    print('Decrepted text', dec)
+
+    # We can XOR the IV and the expected value so that it will cancel
+    # out the corresponding XOR onto the decrypted text with a key.
+    # With that, we can inject our own value with another XOR.
+    new_iv = iv[:10] + chr(iv[10] ^ 0 ^ 1).encode() + iv[11:]
+    new_enc = encode_cipher(new_iv, cipher)
+    print('New encrypted text', new_enc)
+    print('New encrypted text hex', new_enc.hex())
 
 
 
